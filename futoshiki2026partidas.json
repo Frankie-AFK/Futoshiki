@@ -1,0 +1,21 @@
+{"Fácil": [
+    { "número_partida": 1,
+        "dígitos_predeterminados": [
+            {"fila": 1, "columna": 3, "dígito": 3},
+            {"fila": 4, "columna": 4, "dígito": 4}],
+        "desigualdades_horizontales": [
+    {"fila": 0, "columna": 2, "restricción": "<"},
+    {"fila": 3, "columna": 1, "restricción": ">"},
+    {"fila": 4, "columna": 0, "restricción": "<"},
+    {"fila": 4, "columna": 1, "restricción": ">"}
+],       
+"desigualdades_verticales": [
+    {"columna": 2, "fila": 0, "restricción": "v"},
+    {"columna": 0, "fila": 3, "restricción": "^"},
+    {"columna": 3, "fila": 3, "restricción": "v"}
+]
+    }
+],
+    "Intermedio": [],
+    "Difícil": []
+}
