@@ -220,6 +220,31 @@ def abrir_juego():
     boton_borrar_juego.grid(row=14, column=9, columnspan=2, pady=20)#Coloca el botón
 
 
+
+    def guardar_partida():#Guarda el progreso de la partida
+        if iniciado[0] == False:#Comprueba si el juego está activo
+            print("Primero debe iniciar el juego")
+            return
+        tablero = []#Lista para guardar los números del tablero
+        for fila in range(5):#Recorre las 5 filas
+            fila_actual = []#Guarda los números de una fila
+            for columna in range(5):#Recorre las 5 columnas
+                numero = casillas[fila][columna].get()#Obtiene el número de la casilla
+                fila_actual.append(numero)#Agrega el número a la fila
+            tablero.append(fila_actual)#Agrega la fila al tablero
+            datos_guardados = {#Agrupa los datos de la partida
+            "nombre": entrada_nombre.get().strip(),#Guarda el nombre del jugador
+            "nivel": "Fácil",#Guarda la dificultad actual
+            "tiempo": segundos[0],#Guarda los segundos transcurridos
+            "tablero": tablero#Guarda los números del tablero
+            }
+        with open("partida_guardada.json", "w", encoding="utf-8") as archivo:#Abre el archivo para guardar
+            json.dump(datos_guardados, archivo, indent=4, ensure_ascii=False)#Escribe los datos en JSON
+        print("Partida guardada correctamente")#Confirma que se guardó
+    boton_guardar = tk.Button(juego, text="GUARDAR PARTIDA", command=guardar_partida)#Crea el botón para guardar
+    boton_guardar.grid(row=16, column=0, columnspan=3, pady=10)#Coloca el botón debajo del reloj
+
+
     
     def seleccionar_numero(numero):
         seleccionado[0] = numero#Actualiza el número seleccionado
