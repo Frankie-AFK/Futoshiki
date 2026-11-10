@@ -16,6 +16,7 @@ def abrir_juego():
     iniciado = [False]#Indica si la partida ha comenzado
     terminado = [False]#Indica si la partida ya terminó
     segundos = [0]#Guarda los segundos transcurridos
+    reloj_pendiente = [None] #Guarda el identificador del contador
     titulo = tk.Label(juego, text="FUTOSHIKI", font=("Arial", 24, "bold"))#Título del juego
     titulo.grid(row=0, column=0, columnspan=10, pady=10)#Coloca el título arriba
     nivel = tk.Label(juego, text="NIVEL FÁCIL", font=("Arial", 14))#Muestra el nivel
@@ -113,6 +114,7 @@ def abrir_juego():
                 historial.append((fila, columna, anterior))#Guarda la jugada válida para poder deshacerla
 
 
+
     historial = []#Guarda las jugadas realizadas para poder deshacerlas                    
     casillas = []#Guarda las casillas del tablero
     for fila in range(5):#Recorre las 5 filas
@@ -155,12 +157,17 @@ def abrir_juego():
             minutos = (segundos[0] % 3600) // 60#Calcula los minutos
             seg = segundos[0] % 60#Calcula los segundos
             reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Muestra el tiempo
-        if terminado[0] == False:#Comprueba si el juego no ha terminado
-            juego.after(1000, actualizar_reloj)#Vuelve a ejecutar después de un segundo
+        if iniciado[0] == True: #Comprueba si debe seguir contando
+            reloj_pendiente[0] = juego.after(1000, actualizar_reloj)#Programa el siguiente segundo
+        else:
+            reloj_pendiente[0] = None#Indica que el contador se detuvo
 
 
 
     def iniciar_juego():#Función para iniciar la partida
+        if iniciado[0] == True:#Evita iniciar dos veces la misma partida
+            print("El juego ya está iniciado")#Muestra un aviso
+            return#Termina la función
         if terminado[0] == True:#Comprueba si la partida ya terminó
             print("La partida ya terminó")#Muestra un aviso
             return#Impide reiniciar la partida
@@ -170,7 +177,7 @@ def abrir_juego():
             return#No inicia el juego
         iniciado[0] = True#Permite jugar
         segundos[0] = 0#Reinicia el contador a cero
-        actualizar_reloj()#Comienza a contar el tiempo
+        reloj_pendiente[0] = juego.after(1000, actualizar_reloj)#Inicia el reloj después de un segundo
         print("Juego iniciado")#Confirma el inicio
     boton_iniciar = tk.Button(juego, text="INICIAR JUEGO", command=iniciar_juego)#Crea el botón
     boton_iniciar.grid(row=14, column=0, columnspan=3, pady=20)#Coloca el botón debajo del tablero
@@ -245,6 +252,40 @@ def abrir_juego():
     boton_guardar.grid(row=16, column=0, columnspan=3, pady=10)#Coloca el botón debajo del reloj
 
 
+
+    def cargar_partida():#Recupera una partida guardada
+        try:#Intenta abrir el archivo
+            with open("partida_guardada.json", "r", encoding="utf-8") as archivo:#Abre la partida guardada
+                datos = json.load(archivo)#Convierte el JSON en datos de Python
+        except FileNotFoundError:#Detecta si el archivo no existe
+            print("No hay ninguna partida guardada")#Muestra un aviso
+            return#Termina la función
+        entrada_nombre.delete(0, tk.END)#Borra el nombre anterior
+        entrada_nombre.insert(0, datos["nombre"])#Recupera el nombre guardado
+        segundos[0] = datos["tiempo"]#Recupera los segundos guardados
+        horas = segundos[0] // 3600#Calcula las horas
+        minutos = (segundos[0] % 3600) // 60#Calcula los minutos
+        seg = segundos[0] % 60#Calcula los segundos
+        reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Muestra el tiempo recuperado
+        tablero = datos["tablero"]#Obtiene el tablero guardado
+        for fila in range(5):#Recorre las 5 filas
+            for columna in range(5):#Recorre las 5 columnas
+                casilla = casillas[fila][columna]#Obtiene la casilla actual
+                if casilla["state"] == "normal":#Evita modificar números fijos
+                    casilla.delete(0, tk.END)#Borra el número anterior
+                    casilla.insert(0, tablero[fila][columna])#Coloca el número guardado
+        historial.clear()#Limpia las jugadas de la partida anterior
+        terminado[0] = False#Permite continuar la partida guardada
+        iniciado[0] = True#Activa la partida recuperada
+        if reloj_pendiente[0] != None:#Comprueba si existe un contador anterior
+            juego.after_cancel(reloj_pendiente[0])#Cancela el contador anterior
+            reloj_pendiente[0] = None#Limpia el identificador
+        reloj_pendiente[0] = juego.after(1000, actualizar_reloj)#Continúa el reloj después de un segundo
+        print("Partida cargada correctamente")#Confirma que se cargó
+    boton_cargar = tk.Button(juego, text="CARGAR PARTIDA", command=cargar_partida)#Crea el botón para cargar
+    boton_cargar.grid(row=16, column=6, columnspan=3, pady=10)#Coloca el botón junto a guardar
+
+
     
     def seleccionar_numero(numero):
         seleccionado[0] = numero#Actualiza el número seleccionado
@@ -262,7 +303,3 @@ barra_menu.add_command(label="Configurar")#Configuración
 barra_menu.add_command(label="Ayuda")#Manual de usuario
 barra_menu.add_command(label="Acerca de")#Información del programa
 ventana.mainloop()#Mantiene la ventana abierta
-
-
-
-
