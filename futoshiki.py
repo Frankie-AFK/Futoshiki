@@ -1,6 +1,7 @@
 import json#Permite trabajar con archivos JSON
 import tkinter as tk#Importa la librería para crear ventanas
 import time#Permite trabajar con el tiempo
+from collections import deque#Importa deque para manejar la pila de jugadas
 with open("futoshiki2026partidas.json", "r", encoding="utf-8") as archivo:#Abre el archivo JSON
     partidas = json.load(archivo)#Convierte los datos JSON en estructuras de Python
 ventana = tk.Tk()#Crea la ventana principal
@@ -115,7 +116,7 @@ def abrir_juego():
 
 
 
-    historial = []#Guarda las jugadas realizadas para poder deshacerlas                    
+    historial = deque()#Crea una pila para guardar las jugadas realizadas                  
     casillas = []#Guarda las casillas del tablero
     for fila in range(5):#Recorre las 5 filas
         fila_casillas = []#Guarda las casillas de una fila
@@ -146,7 +147,6 @@ def abrir_juego():
         simbolo.grid(row=fila*2+5, column=columna*2) #Coloca el símbolo entre filas
     botones = []#Guarda los botones de los números
     seleccionado = [0]#Guarda el número seleccionado
-    historial = []#Guarda las jugadas realizadas para poder deshacerlas
 
 
 
