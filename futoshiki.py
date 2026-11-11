@@ -2,6 +2,7 @@ import json#Permite trabajar con archivos JSON
 import tkinter as tk#Importa la librería para crear ventanas
 import time#Permite trabajar con el tiempo
 from collections import deque#Importa deque para manejar la pila de jugadas
+from tkinter import messagebox#Permite mostrar ventanas de confirmación
 with open("futoshiki2026partidas.json", "r", encoding="utf-8") as archivo:#Abre el archivo JSON
     partidas = json.load(archivo)#Convierte los datos JSON en estructuras de Python
 ventana = tk.Tk()#Crea la ventana principal
@@ -204,6 +205,9 @@ def abrir_juego():
         if iniciado[0] == False:#Comprueba si el juego no ha comenzado
             print("Primero debe iniciar el juego")#Muestra un aviso
             return#Termina la función
+        respuesta = messagebox.askyesno("Terminar juego", "¿Seguro que desea terminar la partida?", parent=juego)#Pregunta si desea terminar
+        if respuesta == False:#Comprueba si seleccionó No
+            return#Cancela la acción
         iniciado[0] = False#Impide seguir colocando números
         terminado[0] = True#Marca la partida como terminada
         print("Juego terminado")#Confirma que terminó la partida
@@ -216,6 +220,9 @@ def abrir_juego():
         if iniciado[0] == False:#Comprueba si la partida está activa
             print("Primero debe iniciar el juego")#Muestra un aviso
             return#Termina la función
+        respuesta = messagebox.askyesno("Borrar juego", "¿Seguro que desea borrar el tablero?", parent=juego)#Pregunta si desea borrar
+        if respuesta == False:#Comprueba si seleccionó No
+            return#Cancela la acción
         for fila in range(5):#Recorre las filas
             for columna in range(5):#Recorre las columnas
                 casilla = casillas[fila][columna]#Obtiene la casilla
