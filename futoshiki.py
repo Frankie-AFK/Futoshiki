@@ -201,10 +201,41 @@ def abrir_juego():
 
 
 
+    def tablero_completo():#Comprueba si todas las casillas tienen números
+        for fila in range(5):#Recorre las 5 filas
+            for columna in range(5):#Recorre las 5 columnas
+                if casillas[fila][columna].get() == "":#Busca casillas vacías
+                    return False#El tablero todavía está incompleto
+        return True#Todas las casillas tienen números
+
+
+
+    def tablero_correcto():#Comprueba si la solución cumple las reglas
+        for fila in range(5):#Recorre las filas
+            for columna in range(5):#Recorre las columnas
+                numero = casillas[fila][columna].get()#Obtiene el número
+                if validar_fila(fila, numero) == False:#Comprueba la fila
+                    return False#Hay números repetidos
+                if validar_columna(columna, numero) == False:#Comprueba la columna
+                    return False#Hay números repetidos
+        if validar_horizontal() == False:#Comprueba desigualdades horizontales
+            return False#Hay una desigualdad incorrecta
+        if validar_vertical() == False:#Comprueba desigualdades verticales
+            return False#Hay una desigualdad incorrecta
+        return True#La solución es correcta
+
+
+
     def terminar_juego():#Termina la partida actual
         if iniciado[0] == False:#Comprueba si el juego no ha comenzado
             print("Primero debe iniciar el juego")#Muestra un aviso
             return#Termina la función
+        if tablero_completo() == False:#Comprueba si faltan números
+            messagebox.showwarning("Tablero incompleto", "Todavía hay casillas vacías", parent=juego)#Muestra un aviso
+            return#Impide terminar una partida incompleta
+        if tablero_correcto() == False:#Comprueba si la solución es correcta
+            messagebox.showwarning("Solución incorrecta", "El tablero no cumple las reglas", parent=juego)#Muestra un aviso
+            return#Permite corregir el tablero
         respuesta = messagebox.askyesno("Terminar juego", "¿Seguro que desea terminar la partida?", parent=juego)#Pregunta si desea terminar
         if respuesta == False:#Comprueba si seleccionó No
             return#Cancela la acción
