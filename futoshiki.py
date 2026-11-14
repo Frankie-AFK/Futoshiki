@@ -241,7 +241,34 @@ def abrir_juego():
             return#Cancela la acción
         iniciado[0] = False#Impide seguir colocando números
         terminado[0] = True#Marca la partida como terminada
+        guardar_resultado() #Registra los datos del jugador ganador
         print("Juego terminado")#Confirma que terminó la partida
+
+
+        
+    def guardar_resultado():#Guarda el resultado del jugador
+        resultado = {#Crea los datos del resultado
+            "nombre": entrada_nombre.get(),#Obtiene el nombre del jugador
+            "nivel": "Fácil",#Guarda la dificultad actual
+            "tiempo": segundos[0]#Guarda el tiempo en segundos
+        }
+        print(resultado)#Muestra el resultado para comprobarlo
+        resultados = []#Crea una lista para guardar los resultados
+        try:#Intenta abrir el archivo existente
+            with open("top10.json", "r", encoding="utf-8") as archivo:
+              resultados = json.load(archivo)#Lee los resultados anteriores
+        except FileNotFoundError:#Si todavía no existe el archivo
+            resultados = []#Comienza con una lista vacía
+        resultados.append(resultado)#Agrega el nuevo ganador a la lista
+        for i in range(len(resultados)):#Recorre los resultados
+            for j in range(i + 1, len(resultados)):#Compara con los siguientes
+                if resultados[i]["tiempo"] > resultados[j]["tiempo"]:#Compara los tiempos
+                    temporal = resultados[i]#Guarda temporalmente un resultado
+                    resultados[i] = resultados[j]#Coloca primero el menor tiempo
+                    resultados[j] = temporal#Mueve el otro resultado
+        resultados = resultados[:10]#Conserva los 10 mejores resultados
+        with open("top10.json", "w", encoding="utf-8") as archivo:#Abre el archivo para guardar
+            json.dump(resultados, archivo, ensure_ascii=False, indent=4)#Guarda todos los resultados
     boton_terminar = tk.Button(juego, text="TERMINAR JUEGO", command=terminar_juego)#Crea el botón
     boton_terminar.grid(row=14, column=6, columnspan=3, pady=20)#Coloca el botón debajo del tablero
 
@@ -334,9 +361,38 @@ def abrir_juego():
         boton = tk.Button(juego, text=str(numero), width=5, height=2, command=lambda n=numero: seleccionar_numero(n))#Crea el botón
         boton.grid(row=(numero-1)*2+4, column=9, padx=20)#Coloca el botón
         botones.append(boton)#Guarda el botón en la lista
+
+
+
+def mostrar_top10():#Abre la ventana de clasificación
+    ventana_top = tk.Toplevel(ventana)#Crea una ventana nueva
+    ventana_top.title("TOP 10")#Coloca el título
+    ventana_top.geometry("400x400")#Establece el tamaño
+    titulo = tk.Label(ventana_top, text="MEJORES 10 JUGADORES", font=("Arial", 16, "bold"))#Crea el título
+    titulo.pack(pady=15)#Coloca el título en la ventana
+    resultados = []#Crea una lista para los mejores jugadores
+    try:#Intenta abrir el archivo de clasificación
+        with open("top10.json", "r", encoding="utf-8") as archivo:
+            resultados = json.load(archivo)#Lee los resultados guardados
+    except FileNotFoundError:#Si todavía no existe el archivo
+        resultados = []#Deja la lista vacía
+    print(resultados)#Muestra los resultados para comprobarlos
+    if len(resultados) == 0:#Comprueba si no hay jugadores
+        texto = tk.Label(ventana_top, text="Todavía no hay resultados")#Crea el mensaje
+        texto.pack(pady=10)#Muestra el mensaje
+    else:#Si existen resultados
+        for i in range(len(resultados)):#Recorre los jugadores
+            jugador = resultados[i] #Obtiene los datos del jugador
+            texto = str(i + 1) + ". " + jugador["nombre"] + " - " + str(jugador["tiempo"]) + " segundos"#Prepara el texto
+            etiqueta = tk.Label(ventana_top, text=texto, font=("Arial", 12))#Crea la etiqueta
+            etiqueta.pack(pady=5)#Muestra el jugador
+
+
+        
 barra_menu = tk.Menu(ventana)#Crea la barra de menú
 ventana.config(menu=barra_menu)#Coloca la barra en la ventana
 barra_menu.add_command(label="Jugar", command=abrir_juego)#Abre el juego
+barra_menu.add_command(label="TOP 10", command=mostrar_top10) #Abre la clasificación
 barra_menu.add_command(label="Configurar")#Configuración
 barra_menu.add_command(label="Ayuda")#Manual de usuario
 barra_menu.add_command(label="Acerca de")#Información del programa
