@@ -1,3 +1,4 @@
+import random #Permite seleccionar partidas aleatorias
 import json#Permite trabajar con archivos JSON
 import tkinter as tk#Importa la librería para crear ventanas
 import time#Permite trabajar con el tiempo
@@ -8,6 +9,7 @@ with open("futoshiki2026partidas.json", "r", encoding="utf-8") as archivo:#Abre 
 ventana = tk.Tk()#Crea la ventana principal
 ventana.title("FUTOSHIKI")#Nombre de la ventana
 ventana.geometry("600x500")#Tamaño de la ventana
+dificultad_actual = tk.StringVar(value="Fácil") #Guarda la dificultad elegida
 
 
 
@@ -21,7 +23,7 @@ def abrir_juego():
     reloj_pendiente = [None] #Guarda el identificador del contador
     titulo = tk.Label(juego, text="FUTOSHIKI", font=("Arial", 24, "bold"))#Título del juego
     titulo.grid(row=0, column=0, columnspan=10, pady=10)#Coloca el título arriba
-    nivel = tk.Label(juego, text="NIVEL FÁCIL", font=("Arial", 14))#Muestra el nivel
+    nivel = tk.Label(juego, text="NIVEL " + dificultad_actual.get().upper(), font=("Arial", 14)) #Muestra la dificultad seleccionada
     nivel.grid(row=1, column=0, columnspan=10)#Coloca el nivel debajo del título
     texto_nombre = tk.Label(juego, text="Nombre del jugador:")#Texto para pedir el nombre
     texto_nombre.grid(row=2, column=0, columnspan=3)#Coloca el texto
@@ -127,7 +129,13 @@ def abrir_juego():
             casilla.bind("<Button-1>", lambda evento, f=fila, c=columna: colocar_numero(f, c))#Detecta el clic izquierdo
             fila_casillas.append(casilla)#Guarda la casilla en su fila
         casillas.append(fila_casillas)#Guarda la fila completa
-    partida = partidas["Fácil"][0]#Obtiene la primera partida del nivel Fácil
+    nivel_seleccionado = dificultad_actual.get() #Obtiene la dificultad seleccionada
+    partidas_nivel = partidas[nivel_seleccionado] #Busca las partidas de esa dificultad
+    if len(partidas_nivel) == 0: #Comprueba si hay partidas disponibles
+        messagebox.showwarning("Sin partidas", "Todavía no hay partidas para esta dificultad", parent=juego)
+        juego.destroy() #Cierra la ventana del juego
+        return
+    partida = random.choice(partidas_nivel) #Selecciona una partida aleatoria de la dificultad
     for dato in partida["dígitos_predeterminados"]:#Recorre los números fijos
         fila = dato["fila"] 
         columna = dato["columna"]#Obtiene la columna
@@ -239,10 +247,11 @@ def abrir_juego():
         respuesta = messagebox.askyesno("Terminar juego", "¿Seguro que desea terminar la partida?", parent=juego)#Pregunta si desea terminar
         if respuesta == False:#Comprueba si seleccionó No
             return#Cancela la acción
-        iniciado[0] = False#Impide seguir colocando números
-        terminado[0] = True#Marca la partida como terminada
-        guardar_resultado() #Registra los datos del jugador ganador
-        print("Juego terminado")#Confirma que terminó la partida
+        iniciado[0] = False #Indica que la partida ya no está activa
+        terminado[0] = True #Marca la partida como terminada
+        guardar_resultado() #Guarda el resultado del jugador
+        messagebox.showinfo("¡Victoria!", "¡Felicidades! Completaste el Futoshiki correctamente.", parent=juego) #Muestra el mensaje de victoria
+        print("Juego terminado") #Confirma que terminó la partida
 
 
         
@@ -388,12 +397,28 @@ def mostrar_top10():#Abre la ventana de clasificación
             etiqueta.pack(pady=5)#Muestra el jugador
 
 
+
+def abrir_configuracion(): #Abre la ventana de configuración
+    ventana_config = tk.Toplevel(ventana) #Crea una ventana nueva
+    ventana_config.title("Configuración") #Coloca el título
+    ventana_config.geometry("400x350") #Establece el tamaño
+    titulo = tk.Label(ventana_config, text="CONFIGURACIÓN DEL JUEGO",font=("Arial", 16, "bold")) #Crea el título
+    titulo.pack(pady=15) #Muestra el título
+    texto_nivel = tk.Label(ventana_config, text="Seleccione la dificultad:") #Crea el texto de dificultad
+    texto_nivel.pack(pady=10) #Muestra el texto
+    dificultad = dificultad_actual #Utiliza la dificultad guardada del programa
+    for opcion in ["Fácil", "Intermedio", "Difícil"]: #Recorre las dificultades
+        boton = tk.Radiobutton(ventana_config, text=opcion, variable=dificultad, value=opcion) #Crea una opción
+        boton.pack(pady=5) #Muestra la opción
+
+
+
         
 barra_menu = tk.Menu(ventana)#Crea la barra de menú
 ventana.config(menu=barra_menu)#Coloca la barra en la ventana
 barra_menu.add_command(label="Jugar", command=abrir_juego)#Abre el juego
 barra_menu.add_command(label="TOP 10", command=mostrar_top10) #Abre la clasificación
-barra_menu.add_command(label="Configurar")#Configuración
+barra_menu.add_command(label="Configurar", command=abrir_configuracion) #Abre la configuración
 barra_menu.add_command(label="Ayuda")#Manual de usuario
 barra_menu.add_command(label="Acerca de")#Información del programa
 ventana.mainloop()#Mantiene la ventana abierta

@@ -14,8 +14,45 @@
     {"columna": 0, "fila": 3, "restricción": "^"},
     {"columna": 3, "fila": 3, "restricción": "v"}
 ]
+    },
+    {"número_partida": 2,
+"dígitos_predeterminados": [
+    {"fila": 0, "columna": 0, "dígito": 1},
+    {"fila": 2, "columna": 2, "dígito": 3},
+    {"fila": 4, "columna": 4, "dígito": 5}
+],
+"desigualdades_horizontales": [
+    {"fila": 0, "columna": 0, "restricción": "<"},
+    {"fila": 1, "columna": 2, "restricción": ">"},
+    {"fila": 3, "columna": 1, "restricción": "<"}
+],
+"desigualdades_verticales": [
+    {"fila": 0, "columna": 1, "restricción": "v"},
+    {"fila": 2, "columna": 3, "restricción": "^"}
+]
+
+    }
+  ],
+  "Intermedio": [
+    {
+        "número_partida": 1,
+        "dígitos_predeterminados": [
+            {"fila": 0, "columna": 0, "dígito": 1},
+            {"fila": 1, "columna": 1, "dígito": 3},
+            {"fila": 3, "columna": 3, "dígito": 2}
+        ],
+        "desigualdades_horizontales": [
+            {"fila": 0, "columna": 0, "restricción": "<"},
+            {"fila": 1, "columna": 2, "restricción": ">"},
+            {"fila": 3, "columna": 3, "restricción": "<"}
+        ],
+        "desigualdades_verticales": [
+            {"fila": 0, "columna": 1, "restricción": "v"},
+            {"fila": 2, "columna": 2, "restricción": "^"}
+        ]
     }
 ],
-    "Intermedio": [],
+
+
     "Difícil": []
 }
