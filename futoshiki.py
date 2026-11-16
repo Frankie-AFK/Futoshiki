@@ -116,6 +116,8 @@ def abrir_juego():
                     casilla.delete(0, tk.END)#Borra el número incorrecto
                     return#Termina la función
                 historial.append((fila, columna, anterior))#Guarda la jugada válida para poder deshacerla
+                if tablero_completo() and tablero_correcto(): #Comprueba si el jugador ganó
+                    victoria() #Finaliza la partida automáticamente al ganar
 
 
 
@@ -234,23 +236,23 @@ def abrir_juego():
 
 
 
+    def victoria(): #Finaliza la partida cuando el jugador gana
+        iniciado[0] = False #Indica que la partida terminó
+        terminado[0] = True #Marca la partida como terminada
+        guardar_resultado() #Guarda el resultado del ganador
+        messagebox.showinfo("¡Victoria!", "¡Felicidades! Completaste el Futoshiki correctamente.", parent=juego) #Muestra el mensaje de victoria
+
+
+
     def terminar_juego():#Termina la partida actual
         if iniciado[0] == False:#Comprueba si el juego no ha comenzado
             print("Primero debe iniciar el juego")#Muestra un aviso
             return#Termina la función
-        if tablero_completo() == False:#Comprueba si faltan números
-            messagebox.showwarning("Tablero incompleto", "Todavía hay casillas vacías", parent=juego)#Muestra un aviso
-            return#Impide terminar una partida incompleta
-        if tablero_correcto() == False:#Comprueba si la solución es correcta
-            messagebox.showwarning("Solución incorrecta", "El tablero no cumple las reglas", parent=juego)#Muestra un aviso
-            return#Permite corregir el tablero
         respuesta = messagebox.askyesno("Terminar juego", "¿Seguro que desea terminar la partida?", parent=juego)#Pregunta si desea terminar
         if respuesta == False:#Comprueba si seleccionó No
             return#Cancela la acción
         iniciado[0] = False #Indica que la partida ya no está activa
         terminado[0] = True #Marca la partida como terminada
-        guardar_resultado() #Guarda el resultado del jugador
-        messagebox.showinfo("¡Victoria!", "¡Felicidades! Completaste el Futoshiki correctamente.", parent=juego) #Muestra el mensaje de victoria
         print("Juego terminado") #Confirma que terminó la partida
 
 
@@ -319,8 +321,8 @@ def abrir_juego():
             "tiempo": segundos[0],#Guarda los segundos transcurridos
             "tablero": tablero#Guarda los números del tablero
             }
-        with open("partida_guardada.json", "w", encoding="utf-8") as archivo:#Abre el archivo para guardar
-            json.dump(datos_guardados, archivo, indent=4, ensure_ascii=False)#Escribe los datos en JSON
+        with open("partidas_guardadas.json", "a", encoding="utf-8") as archivo: #Agrega una partida sin borrar las anteriores
+            archivo.write(json.dumps(datos_guardados, ensure_ascii=False) + "\n") #Guarda una partida por línea
         print("Partida guardada correctamente")#Confirma que se guardó
     boton_guardar = tk.Button(juego, text="GUARDAR PARTIDA", command=guardar_partida)#Crea el botón para guardar
     boton_guardar.grid(row=16, column=0, columnspan=3, pady=10)#Coloca el botón debajo del reloj
@@ -329,33 +331,58 @@ def abrir_juego():
 
     def cargar_partida():#Recupera una partida guardada
         try:#Intenta abrir el archivo
-            with open("partida_guardada.json", "r", encoding="utf-8") as archivo:#Abre la partida guardada
-                datos = json.load(archivo)#Convierte el JSON en datos de Python
+            with open("partidas_guardadas.json", "r", encoding="utf-8") as archivo: #Abre las partidas guardadas
+                partidas = [json.loads(linea) for linea in archivo if linea.strip()] #Lee cada partida del archivo
+                if len(partidas) == 0: #Comprueba si no hay partidas guardadas
+                    messagebox.showwarning("Sin partidas", "No hay partidas guardadas", parent=juego)
+                    return
+                opciones = [] #Guarda las opciones para seleccionar
+                for i in range(len(partidas)): #Recorre las partidas guardadas
+                    partida = partidas[i]
+                    opciones.append(str(i + 1) + ". " + partida["nombre"] + " - " + partida["nivel"])
+                ventana_partidas = tk.Toplevel(juego) #Crea una ventana para seleccionar partidas
+                ventana_partidas.title("Partidas guardadas") #Coloca el título
+                ventana_partidas.geometry("400x300") #Establece el tamaño
+                tk.Label(ventana_partidas, text="SELECCIONAR PARTIDA").pack(pady=10) #Muestra el título
+                lista_partidas = tk.Listbox(ventana_partidas, width=45, height=8) #Crea la lista
+                lista_partidas.pack(pady=10) #Coloca la lista en la ventana
+                for opcion in opciones: #Recorre las partidas disponibles
+                    lista_partidas.insert(tk.END, opcion) #Agrega cada partida a la lista
+                def cargar_seleccionada(): #Carga la partida elegida por el jugador
+                    seleccion = lista_partidas.curselection() #Obtiene la posición seleccionada
+                    if len(seleccion) == 0: #Comprueba si no seleccionó ninguna partida
+                        messagebox.showwarning("Aviso", "Seleccione una partida", parent=ventana_partidas)
+                        return #Evita continuar sin seleccionar
+                    datos = partidas[seleccion[0]] #Obtiene los datos de la partida seleccionada
+                    ventana_partidas.destroy() #Cierra la ventana de selección
+                    dificultad_actual.set(datos["nivel"]) #Recupera la dificultad de la partida seleccionada
+                    entrada_nombre.delete(0, tk.END)#Borra el nombre anterior
+                    entrada_nombre.insert(0, datos["nombre"])#Recupera el nombre guardado
+                    segundos[0] = datos["tiempo"]#Recupera los segundos guardados
+                    horas = segundos[0] // 3600#Calcula las horas
+                    minutos = (segundos[0] % 3600) // 60#Calcula los minutos
+                    seg = segundos[0] % 60#Calcula los segundos
+                    reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Muestra el tiempo recuperado
+                    tablero = datos["tablero"]#Obtiene el tablero guardado
+                    for fila in range(5):#Recorre las 5 filas
+                        for columna in range(5):#Recorre las 5 columnas
+                            casilla = casillas[fila][columna]#Obtiene la casilla actual
+                            if casilla["state"] == "normal":#Evita modificar números fijos
+                                casilla.delete(0, tk.END)#Borra el número anterior
+                                casilla.insert(0, tablero[fila][columna])#Coloca el número guardado
+                        historial.clear()#Limpia las jugadas de la partida anterior
+                        terminado[0] = False#Permite continuar la partida guardada
+                        iniciado[0] = True#Activa la partida recuperada
+                        if reloj_pendiente[0] != None:#Comprueba si existe un contador anterior
+                            juego.after_cancel(reloj_pendiente[0])#Cancela el contador anterior
+                            reloj_pendiente[0] = None#Limpia el identificador
+                        reloj_pendiente[0] = juego.after(1000, actualizar_reloj)#Continúa el reloj después de un segundo
+                        print("Partida cargada correctamente")#Confirma que se cargó
+                boton_seleccionar = tk.Button(ventana_partidas, text="CARGAR SELECCIONADA", command=cargar_seleccionada) #Crea el botón para cargar
+                boton_seleccionar.pack(pady=10) #Coloca el botón debajo de la lista
         except FileNotFoundError:#Detecta si el archivo no existe
             print("No hay ninguna partida guardada")#Muestra un aviso
             return#Termina la función
-        entrada_nombre.delete(0, tk.END)#Borra el nombre anterior
-        entrada_nombre.insert(0, datos["nombre"])#Recupera el nombre guardado
-        segundos[0] = datos["tiempo"]#Recupera los segundos guardados
-        horas = segundos[0] // 3600#Calcula las horas
-        minutos = (segundos[0] % 3600) // 60#Calcula los minutos
-        seg = segundos[0] % 60#Calcula los segundos
-        reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Muestra el tiempo recuperado
-        tablero = datos["tablero"]#Obtiene el tablero guardado
-        for fila in range(5):#Recorre las 5 filas
-            for columna in range(5):#Recorre las 5 columnas
-                casilla = casillas[fila][columna]#Obtiene la casilla actual
-                if casilla["state"] == "normal":#Evita modificar números fijos
-                    casilla.delete(0, tk.END)#Borra el número anterior
-                    casilla.insert(0, tablero[fila][columna])#Coloca el número guardado
-        historial.clear()#Limpia las jugadas de la partida anterior
-        terminado[0] = False#Permite continuar la partida guardada
-        iniciado[0] = True#Activa la partida recuperada
-        if reloj_pendiente[0] != None:#Comprueba si existe un contador anterior
-            juego.after_cancel(reloj_pendiente[0])#Cancela el contador anterior
-            reloj_pendiente[0] = None#Limpia el identificador
-        reloj_pendiente[0] = juego.after(1000, actualizar_reloj)#Continúa el reloj después de un segundo
-        print("Partida cargada correctamente")#Confirma que se cargó
     boton_cargar = tk.Button(juego, text="CARGAR PARTIDA", command=cargar_partida)#Crea el botón para cargar
     boton_cargar.grid(row=16, column=6, columnspan=3, pady=10)#Coloca el botón junto a guardar
 
