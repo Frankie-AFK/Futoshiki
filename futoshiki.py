@@ -258,7 +258,7 @@ def abrir_juego():
     def guardar_resultado():#Guarda el resultado del jugador
         resultado = {#Crea los datos del resultado
             "nombre": entrada_nombre.get(),#Obtiene el nombre del jugador
-            "nivel": "Fácil",#Guarda la dificultad actual
+            "nivel": nivel_seleccionado, #Guarda la dificultad real de la partida
             "tiempo": segundos[0]#Guarda el tiempo en segundos
         }
         print(resultado)#Muestra el resultado para comprobarlo
@@ -315,7 +315,7 @@ def abrir_juego():
             tablero.append(fila_actual)#Agrega la fila al tablero
             datos_guardados = {#Agrupa los datos de la partida
             "nombre": entrada_nombre.get().strip(),#Guarda el nombre del jugador
-            "nivel": "Fácil",#Guarda la dificultad actual
+            "nivel": nivel_seleccionado, #Guarda la dificultad de la partida
             "tiempo": segundos[0],#Guarda los segundos transcurridos
             "tablero": tablero#Guarda los números del tablero
             }
@@ -386,13 +386,15 @@ def mostrar_top10():#Abre la ventana de clasificación
     except FileNotFoundError:#Si todavía no existe el archivo
         resultados = []#Deja la lista vacía
     print(resultados)#Muestra los resultados para comprobarlos
+    nivel_top = dificultad_actual.get() #Obtiene la dificultad seleccionada
+    resultados = [jugador for jugador in resultados if jugador["nivel"] == nivel_top] #Filtra los jugadores por dificultad
     if len(resultados) == 0:#Comprueba si no hay jugadores
         texto = tk.Label(ventana_top, text="Todavía no hay resultados")#Crea el mensaje
         texto.pack(pady=10)#Muestra el mensaje
     else:#Si existen resultados
         for i in range(len(resultados)):#Recorre los jugadores
             jugador = resultados[i] #Obtiene los datos del jugador
-            texto = str(i + 1) + ". " + jugador["nombre"] + " - " + str(jugador["tiempo"]) + " segundos"#Prepara el texto
+            texto = str(i + 1) + ". " + jugador["nombre"] + " - " + jugador["nivel"] + " - " + str(jugador["tiempo"]) + " segundos" #Muestra nombre, dificultad y tiempo
             etiqueta = tk.Label(ventana_top, text=texto, font=("Arial", 12))#Crea la etiqueta
             etiqueta.pack(pady=5)#Muestra el jugador
 

@@ -32,6 +32,31 @@
 ]
 
     }
+,
+{
+    "número_partida": 3,
+    "dígitos_predeterminados": [
+        {"fila": 0, "columna": 0, "dígito": 2},
+        {"fila": 1, "columna": 2, "dígito": 4},
+        {"fila": 3, "columna": 4, "dígito": 3},
+        {"fila": 4, "columna": 1, "dígito": 1}
+    ],
+    "desigualdades_horizontales": [
+        {"fila": 0, "columna": 1, "restricción": "<"},
+        {"fila": 1, "columna": 3, "restricción": ">"},
+        {"fila": 2, "columna": 0, "restricción": ">"},
+        {"fila": 4, "columna": 2, "restricción": "<"}
+    ],
+    "desigualdades_verticales": [
+        {"fila": 0, "columna": 0, "restricción": "^"},
+        {"fila": 1, "columna": 2, "restricción": "v"},
+        {"fila": 3, "columna": 1, "restricción": "v"}
+    ]
+}
+
+
+
+    
   ],
   "Intermedio": [
     {
@@ -51,8 +76,140 @@
             {"fila": 2, "columna": 2, "restricción": "^"}
         ]
     }
+
+,
+{
+    "número_partida": 2,
+    "dígitos_predeterminados": [
+        {"fila": 3, "columna": 3, "dígito": 2},
+        {"fila": 0, "columna": 4, "dígito": 1},
+        {"fila": 3, "columna": 4, "dígito": 4},
+        {"fila": 1, "columna": 3, "dígito": 1}
+    ],
+    "desigualdades_horizontales": [
+        {"fila": 0, "columna": 3, "restricción": ">"},
+        {"fila": 2, "columna": 0, "restricción": "<"},
+        {"fila": 3, "columna": 1, "restricción": ">"},
+        {"fila": 2, "columna": 2, "restricción": ">"},
+        {"fila": 4, "columna": 2, "restricción": "<"}
+    ],
+    "desigualdades_verticales": [
+        {"fila": 0, "columna": 3, "restricción": "v"},
+        {"fila": 2, "columna": 0, "restricción": "^"},
+        {"fila": 1, "columna": 4, "restricción": "^"},
+        {"fila": 0, "columna": 0, "restricción": "^"},
+        {"fila": 1, "columna": 1, "restricción": "v"}
+    ]
+},
+{
+    "número_partida": 3,
+    "dígitos_predeterminados": [
+        {"fila": 0, "columna": 0, "dígito": 5},
+        {"fila": 0, "columna": 3, "dígito": 3},
+        {"fila": 3, "columna": 3, "dígito": 2},
+        {"fila": 4, "columna": 3, "dígito": 4}
+    ],
+    "desigualdades_horizontales": [
+        {"fila": 3, "columna": 1, "restricción": "<"},
+        {"fila": 3, "columna": 0, "restricción": "<"},
+        {"fila": 3, "columna": 2, "restricción": ">"},
+        {"fila": 2, "columna": 1, "restricción": "<"},
+        {"fila": 1, "columna": 1, "restricción": ">"}
+    ],
+    "desigualdades_verticales": [
+        {"fila": 2, "columna": 3, "restricción": "v"},
+        {"fila": 1, "columna": 2, "restricción": "^"},
+        {"fila": 3, "columna": 2, "restricción": "v"},
+        {"fila": 0, "columna": 3, "restricción": "v"},
+        {"fila": 1, "columna": 1, "restricción": "v"}
+    ]
+}
+
+
+    
 ],
 
 
-    "Difícil": []
+    
+"Difícil": [
+    {
+        "número_partida": 1,
+        "dígitos_predeterminados": [
+            {"fila": 4, "columna": 3, "dígito": 5},
+            {"fila": 0, "columna": 2, "dígito": 4},
+            {"fila": 4, "columna": 1, "dígito": 2}
+        ],
+        "desigualdades_horizontales": [
+            {"fila": 3, "columna": 2, "restricción": "<"},
+            {"fila": 2, "columna": 1, "restricción": ">"},
+            {"fila": 4, "columna": 3, "restricción": ">"},
+            {"fila": 3, "columna": 0, "restricción": "<"},
+            {"fila": 4, "columna": 0, "restricción": ">"},
+            {"fila": 3, "columna": 3, "restricción": ">"},
+            {"fila": 0, "columna": 1, "restricción": "<"}
+        ],
+        "desigualdades_verticales": [
+            {"fila": 1, "columna": 3, "restricción": "v"},
+            {"fila": 1, "columna": 2, "restricción": "v"},
+            {"fila": 2, "columna": 0, "restricción": "v"},
+            {"fila": 2, "columna": 1, "restricción": "^"},
+            {"fila": 3, "columna": 4, "restricción": "^"},
+            {"fila": 1, "columna": 0, "restricción": "^"},
+            {"fila": 2, "columna": 2, "restricción": "^"}
+        ]
+    },
+    {
+        "número_partida": 2,
+        "dígitos_predeterminados": [
+            {"fila": 0, "columna": 0, "dígito": 3},
+            {"fila": 4, "columna": 0, "dígito": 2},
+            {"fila": 0, "columna": 2, "dígito": 1}
+        ],
+        "desigualdades_horizontales": [
+            {"fila": 0, "columna": 3, "restricción": "<"},
+            {"fila": 2, "columna": 2, "restricción": ">"},
+            {"fila": 0, "columna": 0, "restricción": "<"},
+            {"fila": 0, "columna": 2, "restricción": "<"},
+            {"fila": 2, "columna": 0, "restricción": ">"},
+            {"fila": 4, "columna": 3, "restricción": ">"},
+            {"fila": 3, "columna": 1, "restricción": "<"}
+        ],
+        "desigualdades_verticales": [
+            {"fila": 2, "columna": 2, "restricción": "v"},
+            {"fila": 3, "columna": 4, "restricción": "v"},
+            {"fila": 2, "columna": 4, "restricción": "^"},
+            {"fila": 0, "columna": 3, "restricción": "^"},
+            {"fila": 3, "columna": 1, "restricción": "^"},
+            {"fila": 1, "columna": 4, "restricción": "v"},
+            {"fila": 3, "columna": 2, "restricción": "^"}
+        ]
+    },
+    {
+        "número_partida": 3,
+        "dígitos_predeterminados": [
+            {"fila": 1, "columna": 3, "dígito": 5},
+            {"fila": 2, "columna": 4, "dígito": 2},
+            {"fila": 3, "columna": 4, "dígito": 5}
+        ],
+        "desigualdades_horizontales": [
+            {"fila": 1, "columna": 2, "restricción": "<"},
+            {"fila": 3, "columna": 3, "restricción": "<"},
+            {"fila": 2, "columna": 1, "restricción": ">"},
+            {"fila": 4, "columna": 0, "restricción": "<"},
+            {"fila": 2, "columna": 0, "restricción": "<"},
+            {"fila": 0, "columna": 1, "restricción": ">"},
+            {"fila": 3, "columna": 2, "restricción": "<"}
+        ],
+        "desigualdades_verticales": [
+            {"fila": 0, "columna": 2, "restricción": "^"},
+            {"fila": 1, "columna": 3, "restricción": "v"},
+            {"fila": 3, "columna": 3, "restricción": "^"},
+            {"fila": 0, "columna": 3, "restricción": "^"},
+            {"fila": 0, "columna": 0, "restricción": "v"},
+            {"fila": 3, "columna": 4, "restricción": "v"},
+            {"fila": 2, "columna": 1, "restricción": "v"}
+        ]
+    }
+]
+
 }
