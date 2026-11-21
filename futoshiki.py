@@ -2,6 +2,7 @@ import random #Permite seleccionar partidas aleatorias
 import json#Permite trabajar con archivos JSON
 import tkinter as tk#Importa la librería para crear ventanas
 import time#Permite trabajar con el tiempo
+from datetime import datetime#Permite obtener la fecha y hora del sistema
 from collections import deque#Importa deque para manejar la pila de jugadas
 from tkinter import messagebox#Permite mostrar ventanas de confirmación
 with open("futoshiki2026partidas.json", "r", encoding="utf-8") as archivo:#Abre el archivo JSON
@@ -222,11 +223,9 @@ def abrir_juego():
         reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Actualiza la pantalla
         if modo_reloj[0] == "Timer" and segundos[0] >= tiempo_limite[0]:#Comprueba si terminó el Timer
             respuesta = messagebox.askyesno("Tiempo expirado","TIEMPO EXPIRADO. ¿Desea continuar el mismo juego?",parent=juego)#Pregunta si desea continuar
-            if respuesta == True:#Si desea continuar
-                modo_reloj[0] = "Cronómetro"#Cambia a cronómetro
-                segundos[0] = 0#Reinicia el cronómetro
-                reloj.config(text="00:00:00")#Actualiza el reloj
-            else:
+            if respuesta == True:#Si desea continuar jugando
+                modo_reloj[0] = "Cronómetro"#Cambia de Timer a Cronómetro
+            else:#Si no desea continuar
                 iniciado[0] = False#Detiene la partida
                 terminado[0] = True#Marca el juego como terminado
                 reloj_pendiente[0] = None#Limpia el contador
@@ -333,30 +332,29 @@ def abrir_juego():
 
 
     
-    def guardar_resultado():#Guarda los mejores tiempos por dificultad
-        resultado = {#Crea el resultado del ganador
+    def guardar_resultado():#Guarda los mejores tiempos de cada nivel
+        resultado = {#Crea el registro del jugador
             "nombre": entrada_nombre.get().strip(),#Guarda el nombre
             "nivel": nivel_seleccionado,#Guarda la dificultad
-            "tiempo": segundos[0]#Guarda el tiempo utilizado
+            "tiempo": segundos[0],#Guarda los segundos utilizados
+            "fecha": datetime.now().strftime("%d/%m/%Y-%H:%M")#Guarda fecha y hora
         }
         try:#Intenta recuperar los resultados anteriores
-            with open("top10.json", "r", encoding="utf-8") as archivo:
+            with open("futoshiki2026top10.dat", "r", encoding="utf-8") as archivo:
                 resultados = json.load(archivo)#Lee los resultados
-        except (FileNotFoundError, json.JSONDecodeError):
-            resultados = []#Crea una lista vacía si no existe
+        except (FileNotFoundError, json.JSONDecodeError):#Si no existe o está dañado
+            resultados = []#Inicia una lista vacía
         resultados.append(resultado)#Agrega el nuevo resultado
-        mejores = []#Guarda los 10 mejores de cada dificultad
-        for dificultad in ["Fácil", "Intermedio", "Difícil"]:
-            jugadores = []#Crea la lista de esta dificultad
-            for jugador in resultados:
-                if jugador["nivel"] == dificultad:
-                    jugadores.append(jugador)
+        mejores = []#Guarda las mejores marcas
+        for dificultad in ["Fácil", "Intermedio", "Difícil"]:#Recorre los niveles
+            jugadores = []#Crea la lista de este nivel
+            for jugador in resultados:#Recorre los resultados
+                if jugador["nivel"] == dificultad:#Comprueba el nivel
+                    jugadores.append(jugador)#Agrega el jugador
             jugadores.sort(key=lambda jugador: jugador["tiempo"])#Ordena por menor tiempo
-            mejores.extend(jugadores[:10])#Conserva los 10 mejores del nivel
-        with open("top10.json", "w", encoding="utf-8") as archivo:
+            mejores.extend(jugadores[:10])#Conserva máximo 10 por nivel
+        with open("futoshiki2026top10.dat", "w", encoding="utf-8") as archivo:
             json.dump(mejores, archivo, ensure_ascii=False, indent=4)#Guarda la clasificación
-    boton_terminar = tk.Button(juego, text="TERMINAR JUEGO", command=terminar_juego)#Crea el botón
-    boton_terminar.grid(row=14, column=6, columnspan=3, pady=20)#Coloca el botón debajo del tablero
 
 
 
@@ -520,6 +518,20 @@ def abrir_juego():
     boton_cargar.grid(row=16, column=6, columnspan=3, pady=10)#Coloca el botón junto a guardar
 
 
+
+    def abrir_top10_juego():#Abre el TOP 10 y pausa el reloj
+        estaba_corriendo = iniciado[0] and modo_reloj[0] != "No usar reloj"#Comprueba el reloj
+        if estaba_corriendo and reloj_pendiente[0] is not None:#Si hay un contador activo
+            juego.after_cancel(reloj_pendiente[0])#Detiene temporalmente el contador
+            reloj_pendiente[0] = None#Limpia el contador pendiente
+        mostrar_top10(juego)#Abre la clasificación y espera a que se cierre
+        if estaba_corriendo and iniciado[0] and juego.winfo_exists():#Si la partida continúa
+            reloj_pendiente[0] = juego.after(1000, actualizar_reloj)#Reanuda el contador
+    boton_top10 = tk.Button(juego, text="TOP 10", command=abrir_top10_juego) #Crea el botón
+    boton_top10.grid(row=14, column=11, pady=20) #Coloca el botón junto a los demás
+
+
+
     
     def seleccionar_numero(numero):
         seleccionado[0] = numero#Actualiza el número seleccionado
@@ -533,33 +545,53 @@ def abrir_juego():
 
 
 
-def mostrar_top10():#Abre la ventana de clasificación
-    ventana_top = tk.Toplevel(ventana)#Crea una ventana nueva
-    ventana_top.title("TOP 10")#Coloca el título
-    ventana_top.geometry("400x400")#Establece el tamaño
-    titulo = tk.Label(ventana_top, text="MEJORES 10 JUGADORES", font=("Arial", 16, "bold"))#Crea el título
-    titulo.pack(pady=15)#Coloca el título en la ventana
-    resultados = []#Crea una lista para los mejores jugadores
-    try:#Intenta abrir el archivo de clasificación
-        with open("top10.json", "r", encoding="utf-8") as archivo:
-            resultados = json.load(archivo)#Lee los resultados guardados
-    except FileNotFoundError:#Si todavía no existe el archivo
-        resultados = []#Deja la lista vacía
-    print(resultados)#Muestra los resultados para comprobarlos
-    nivel_top = dificultad_actual.get()#Obtiene la dificultad actual
-    resultados = [jugador for jugador in resultados if jugador["nivel"] == nivel_top]#Filtra por dificultad
-    resultados.sort(key=lambda jugador: jugador["tiempo"])#Ordena de menor a mayor tiempo
-    resultados = resultados[:10]#Muestra solamente los 10 mejores
-    tk.Label(ventana_top, text="DIFICULTAD: " + nivel_top.upper(), font=("Arial", 12, "bold")).pack(pady=5)#Muestra el nivel
-    if len(resultados) == 0:#Comprueba si no hay jugadores
-        texto = tk.Label(ventana_top, text="Todavía no hay resultados")#Crea el mensaje
-        texto.pack(pady=10)#Muestra el mensaje
-    else:#Si existen resultados
-        for i in range(len(resultados)):#Recorre los jugadores
-            jugador = resultados[i] #Obtiene los datos del jugador
-            texto = str(i + 1) + ". " + jugador["nombre"] + " - " + jugador["nivel"] + " - " + str(jugador["tiempo"]) + " segundos"#Muestra nombre, dificultad y tiempo
-            etiqueta = tk.Label(ventana_top, text=texto, font=("Arial", 12))#Crea la etiqueta
-            etiqueta.pack(pady=5)#Muestra el jugador
+
+def mostrar_top10(padre=None):#Muestra el TOP 10 y espera a que se cierre
+    ventana_top = tk.Toplevel(padre if padre is not None else ventana)#Usa la ventana que abrió el TOP 10
+    ventana_top.title("TOP 10 - FUTOSHIKI")#Coloca el título
+    ventana_top.geometry("750x650")#Define el tamaño
+    ventana_top.transient(padre if padre is not None else ventana)#Relaciona el TOP 10 con su ventana
+    ventana_top.grab_set()#Impide jugar mientras está abierto
+    tk.Label(ventana_top, text="TOP 10 FUTOSHIKI",
+             font=("Arial", 20, "bold")).pack(pady=15)#Muestra el título
+    try:#Intenta leer las mejores marcas
+        with open("futoshiki2026top10.dat", "r", encoding="utf-8") as archivo:
+            resultados = json.load(archivo)#Carga los resultados
+    except FileNotFoundError:#Si el archivo no existe
+        resultados = []#Inicia sin resultados
+    except json.JSONDecodeError:#Si el archivo tiene errores
+        messagebox.showerror("Error", "El archivo TOP 10 está dañado", parent=ventana_top)
+        ventana_top.destroy()#Cierra la ventana
+        return
+    for dificultad in ["Difícil", "Intermedio", "Fácil"]:#Recorre los tres niveles
+        tk.Label(ventana_top, text="NIVEL " + dificultad.upper(),
+                 font=("Arial", 14, "bold")).pack(pady=(15, 5))#Muestra el nivel
+        encabezado = f"{'JUGADOR':<20}{'TIEMPO':<12}FECHA DE LA JUGADA"#Crea los encabezados
+        tk.Label(ventana_top, text=encabezado,
+                 font=("Courier New", 10, "bold")).pack()#Muestra las columnas
+        jugadores = []#Guarda los jugadores de este nivel
+        for jugador in resultados:#Recorre todos los resultados
+            if jugador["nivel"] == dificultad:#Comprueba la dificultad
+                jugadores.append(jugador)#Agrega el resultado correspondiente
+        jugadores.sort(key=lambda jugador: jugador["tiempo"])#Ordena por menor tiempo
+        if len(jugadores) == 0:#Comprueba si no hay resultados
+            tk.Label(ventana_top, text="Todavía no hay resultados").pack(pady=5)#Muestra el aviso
+        else:
+            for i in range(min(10, len(jugadores))):#Muestra máximo diez jugadores
+                jugador = jugadores[i]#Obtiene el jugador
+                segundos_total = jugador["tiempo"]#Obtiene el tiempo total
+                horas = segundos_total // 3600#Calcula horas
+                minutos = (segundos_total % 3600) // 60#Calcula minutos
+                segundos = segundos_total % 60#Calcula segundos
+                tiempo = f"{horas:02}:{minutos:02}:{segundos:02}"#Formatea el tiempo
+                nombre = jugador["nombre"][:18]#Limita el nombre para la tabla
+                fecha = jugador.get("fecha", "Sin fecha")#Obtiene la fecha
+                texto = f"{i + 1:>2}. {nombre:<18}{tiempo:<12}{fecha}"#Prepara la fila
+                tk.Label(ventana_top, text=texto,
+                         font=("Courier New", 10)).pack()#Muestra el resultado
+    tk.Button(ventana_top, text="CERRAR",
+              command=ventana_top.destroy).pack(pady=20)#Cierra el TOP 10
+    ventana_top.wait_window() #Espera a que se cierre antes de regresar al juego
 
 
 
