@@ -133,16 +133,54 @@ def abrir_juego():
         aviso.focus_set()#Activa el teclado
 
 
+
+
+
+    def obtener_error_desigualdad(): #Identifica qué restricción no se cumple
+        for dato in partida[0]["desigualdades_horizontales"]: #Revisa las desigualdades horizontales
+            fila = dato["fila"] #Obtiene la fila
+            columna = dato["columna"] #Obtiene la columna
+            signo = dato["restricción"] #Obtiene el símbolo
+            izquierda = casillas[fila][columna].get() #Obtiene el número izquierdo
+            derecha = casillas[fila][columna + 1].get() #Obtiene el número derecho
+            if izquierda != "" and derecha != "": #Comprueba que ambas casillas tengan números
+                if signo == ">" and int(izquierda) <= int(derecha): #Comprueba la restricción de mayor
+                    return "MAYOR" #Indica el error
+                if signo == "<" and int(izquierda) >= int(derecha): #Comprueba la restricción de menor
+                    return "MENOR" #Indica el error
+
+        for dato in partida[0]["desigualdades_verticales"]: #Revisa las desigualdades verticales
+            fila = dato["fila"] #Obtiene la fila
+            columna = dato["columna"] #Obtiene la columna
+            signo = dato["restricción"] #Obtiene el símbolo
+            arriba = casillas[fila][columna].get() #Obtiene el número superior
+            abajo = casillas[fila + 1][columna].get() #Obtiene el número inferior
+            if arriba != "" and abajo != "": #Comprueba que ambas casillas tengan números
+                if signo == "v" and int(arriba) <= int(abajo): #Comprueba la restricción de mayor
+                    return "MAYOR" #Indica el error
+                if signo == "^" and int(arriba) >= int(abajo): #Comprueba la restricción de menor
+                    return "MENOR" #Indica el error
+
+        return None #No encontró restricciones incorrectas
+
+
+
     
     def colocar_numero(fila, columna):#Recibe la posición de la casilla
         if iniciado[0] == False:#Comprueba si el juego no ha iniciado
             print("Primero debe iniciar el juego")#Muestra un aviso
             return#Impide colocar números
         numero = seleccionado[0]#Obtiene el número seleccionado
+        if numero == 0:#Comprueba si no seleccionó ningún dígito
+            messagebox.showerror("Error", "FALTA QUE SELECCIONE UN DÍGITO", parent=juego)#Muestra el aviso
+            return "break"#Impide colocar un número
         if numero != 0:#Comprueba que se seleccionó un número
             casilla = casillas[fila][columna]#Busca la casilla seleccionada
             if casilla["state"] == "normal":#Comprueba que no sea un número fijo
                 anterior = casilla.get()#Guarda el valor anterior
+                if anterior != "": #Comprueba si la casilla ya contiene un número
+                    messagebox.showinfo("Aviso", "PRIMERO DEBE BORRAR LA JUGADA ANTERIOR", parent=juego) #Muestra el aviso
+                    return "break" #Evita reemplazar el número
                 casilla.delete(0, tk.END)#Borra el número anterior antes de colocar el nuevo
                 casilla.insert(0, str(numero))#Coloca el número seleccionado
                 if validar_fila(fila, numero) == False:#Llama a la función que revisa la fila
@@ -151,15 +189,15 @@ def abrir_juego():
                 if validar_columna(columna, numero) == False:#Llama a la función que revisa la columna
                     mostrar_error(casilla, "JUGADA NO ES VÁLIDA PORQUE EL ELEMENTO YA ESTÁ EN LA COLUMNA", anterior)
                     return#Termina la función
-                if validar_horizontal() == False:#Llama a la función que revisa las desigualdades
-                    mostrar_error(casilla, "JUGADA NO ES VÁLIDA PORQUE NO CUMPLE CON UNA DESIGUALDAD HORIZONTAL", anterior)
-                    return#Termina la función
-                if validar_vertical() == False:#Llama a la función que revisa las desigualdades verticales
-                    mostrar_error(casilla, "JUGADA NO ES VÁLIDA PORQUE NO CUMPLE CON UNA DESIGUALDAD VERTICAL", anterior)
-                    return#Termina la función
+                error = obtener_error_desigualdad() #Identifica la desigualdad incorrecta
+                if error != None: #Comprueba si existe un error
+                    mostrar_error(casilla, "JUGADA NO ES VÁLIDA PORQUE NO CUMPLE CON LA RESTRICCIÓN DE " + error, anterior) #Muestra MAYOR o MENOR
+                    return #Cancela la jugada incorrecta
                 historial.append((fila, columna, anterior))#Guarda la jugada válida para poder deshacerla
                 if tablero_completo() and tablero_correcto():#Comprueba si el jugador ganó
                     victoria()#Finaliza la partida automáticamente al ganar
+            else: #Si la casilla contiene un número predeterminado
+                messagebox.showerror("Error", "JUGADA NO ES VÁLIDA PORQUE NO PUEDE CAMBIAR UN DÍGITO PREDETERMINADO", parent=juego) #Muestra el aviso
         return "break"#Evita que el clic modifique la casilla
 
 
@@ -243,10 +281,28 @@ def abrir_juego():
             print("La partida ya terminó")#Muestra un aviso
             return#Impide reiniciar la partida
         nombre = entrada_nombre.get().strip()#Obtiene el nombre del jugador
-        if nombre == "":#Comprueba si está vacío
-            print("Debe escribir el nombre del jugador")#Muestra un aviso
-            return#No inicia el juego
+        if len(nombre) < 1 or len(nombre) > 30:#Comprueba que tenga entre 1 y 30 caracteres
+            messagebox.showerror("Error", "EL NOMBRE DEBE TENER ENTRE 1 Y 30 CARACTERES", parent=juego)#Muestra el error
+            return#Impide iniciar el juego
+        try:#Intenta abrir el archivo de mejores jugadores
+            with open("futoshiki2026top10.dat", "r", encoding="utf-8") as archivo:#Abre el TOP 10
+                mejores = json.load(archivo)#Recupera los registros
+        except (FileNotFoundError, json.JSONDecodeError):#Si no existe o está dañado
+            mejores = []#Utiliza una lista vacía
+        for jugador in mejores:#Recorre los jugadores registrados
+            if jugador["nombre"].lower() == nombre.lower():#Comprueba si el nombre ya existe
+                respuesta = messagebox.askyesno("Nombre existente", "ESTE NOMBRE YA EXISTE EN EL TOP 10. ¿DESEA CONTINUAR CON EL MISMO NOMBRE?", parent=juego)#Pregunta si desea continuar
+                if respuesta == False:#Si desea cambiar el nombre
+                    entrada_nombre.focus_set()#Coloca el cursor en el nombre
+                    return#No inicia la partida
+                break#Evita preguntar varias veces
         iniciado[0] = True#Permite comenzar o continuar el juego
+        boton_iniciar.config(state="disabled")#Deshabilita INICIAR JUEGO después de comenzar
+        boton_borrar.config(state="normal") #Habilita BORRAR JUGADA
+        boton_borrar_juego.config(state="normal") #Habilita BORRAR JUEGO
+        boton_terminar.config(state="normal") #Habilita TERMINAR JUEGO
+        boton_guardar.config(state="normal") #Permite guardar después de iniciar
+        boton_cargar.config(state="disabled") #Impide cargar durante una partida
         if partida_cargada[0] == False:#Comprueba si es una partida nueva
             segundos[0] = 0#Inicia el tiempo desde cero
         partida_cargada[0] = False#Limpia la marca de partida cargada
@@ -256,8 +312,7 @@ def abrir_juego():
             minutos = (restante % 3600) // 60#Calcula los minutos
             seg = restante % 60#Calcula los segundos
             reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Muestra el tiempo recuperado
-        if modo_reloj[0] != "No usar reloj":#Comprueba si debe iniciar el reloj
-            reloj_pendiente[0] = juego.after(1000, actualizar_reloj)#Inicia el contador
+        reloj_pendiente[0] = juego.after(1000, actualizar_reloj) #Cuenta el tiempo aunque el reloj esté oculto
         print("Juego iniciado")#Confirma el inicio
     boton_iniciar = tk.Button(juego, text="INICIAR JUEGO", command=iniciar_juego)#Crea el botón
     boton_iniciar.grid(row=14, column=0, columnspan=3, pady=20)#Coloca el botón debajo del tablero
@@ -269,13 +324,12 @@ def abrir_juego():
             print("No puede borrar jugadas si el juego no está iniciado")#Muestra un aviso
             return#Impide borrar jugadas
         if len(historial) > 0:#Comprueba que existan jugadas
-            fila, columna, anterior = historial.pop()#Obtiene y elimina la última jugada
-            casilla = casillas[fila][columna]#Busca la casilla modificada
-            casilla.delete(0, tk.END)#Borra el número actual
-            casilla.insert(0, anterior)#Restaura el contenido anterior
-        else:
-            print("No hay jugadas para borrar")#Muestra un aviso
-    boton_borrar = tk.Button(juego, text="BORRAR JUGADA", command=borrar_jugada)#Crea el botón
+            fila, columna, anterior = historial.pop() #Obtiene la última jugada de la pila
+            casilla = casillas[fila][columna] #Busca la casilla correspondiente
+            casilla.delete(0, tk.END) #Deja la casilla vacía como solicita el profesor
+        else: #Si no quedan jugadas en la pila
+            messagebox.showinfo("Aviso", "NO HAY MÁS JUGADAS PARA BORRAR", parent=juego) #Muestra el mensaje solicitado
+    boton_borrar = tk.Button(juego, text="BORRAR JUGADA", command=borrar_jugada, state="disabled")#Crea el botón
     boton_borrar.grid(row=14, column=3, columnspan=3, pady=20)#Coloca el botón debajo del tablero
 
 
@@ -313,6 +367,9 @@ def abrir_juego():
             reloj_pendiente[0] = None#Limpia el reloj pendiente
         guardar_resultado()#Guarda el resultado del ganador
         messagebox.showinfo("¡Victoria!", "¡Felicidades! Completaste el Futoshiki correctamente.", parent=juego)#Muestra el mensaje de victoria
+        juego.destroy() #Cierra la partida completada
+        abrir_juego() #Abre otra partida como solicita el profesor
+
 
 
 
@@ -329,6 +386,11 @@ def abrir_juego():
             juego.after_cancel(reloj_pendiente[0]) #Cancela el reloj
             reloj_pendiente[0] = None #Limpia el reloj pendiente
         print("Juego terminado")#Confirma que terminó la partida
+        juego.destroy() #Cierra la partida actual
+        abrir_juego() #Abre una nueva partida
+    boton_terminar = tk.Button(juego, text="TERMINAR JUEGO", command=terminar_juego, state="disabled") #Crea el botón para terminar
+    boton_terminar.grid(row=14, column=6, columnspan=3, pady=20) #Coloca el botón junto a los demás
+
 
 
     
@@ -371,8 +433,21 @@ def abrir_juego():
                 if casilla["state"] == "normal":#Evita borrar los números fijos
                     casilla.delete(0, tk.END)#Borra el número
         historial.clear()#Elimina el historial de jugadas
+        iniciado[0] = False #Detiene la partida actual
+        terminado[0] = False #Permite iniciar nuevamente
+        boton_iniciar.config(state="normal") #Habilita INICIAR JUEGO
+        boton_borrar.config(state="disabled") #Deshabilita BORRAR JUGADA
+        boton_borrar_juego.config(state="disabled") #Deshabilita BORRAR JUEGO
+        boton_terminar.config(state="disabled") #Deshabilita TERMINAR JUEGO
+        boton_guardar.config(state="disabled") #Deshabilita GUARDAR PARTIDA
+        boton_cargar.config(state="normal") #Habilita CARGAR PARTIDA
+        if reloj_pendiente[0] is not None: #Comprueba si el reloj está activo
+            juego.after_cancel(reloj_pendiente[0]) #Cancela el contador
+            reloj_pendiente[0] = None #Limpia el contador pendiente
+        segundos[0] = 0 #Reinicia el tiempo
+        reloj.config(text="00:00:00") #Reinicia la pantalla del reloj
         print("Juego borrado")#Confirma que se borró el tablero
-    boton_borrar_juego = tk.Button(juego, text="BORRAR JUEGO", command=borrar_juego)#Crea el botón
+    boton_borrar_juego = tk.Button(juego, text="BORRAR JUEGO", command=borrar_juego, state="disabled")#Crea el botón
     boton_borrar_juego.grid(row=14, column=9, columnspan=2, pady=20)#Coloca el botón
 
     
@@ -415,13 +490,24 @@ def abrir_juego():
         with open("futoshiki2026juegoactual.dat", "w", encoding="utf-8") as archivo:
             json.dump(nuevas, archivo, ensure_ascii=False, indent=4)#Guarda todas las partidas
         messagebox.showinfo("Guardar", "Partida guardada correctamente", parent=juego)
-    boton_guardar = tk.Button(juego, text="GUARDAR PARTIDA", command=guardar_partida)#Crea el botón para guardar
+    boton_guardar = tk.Button(juego, text="GUARDAR PARTIDA", command=guardar_partida, state="disabled")#Deshabilita guardar inicialmente
     boton_guardar.grid(row=16, column=0, columnspan=3, pady=10)#Coloca el botón debajo del reloj
 
 
 
     def restaurar_tablero(datos):#Recupera pistas, números y desigualdades
         nonlocal nivel_seleccionado
+        nonlocal desplazamiento, columna_panel #Permite cambiar la posición del panel
+        panel_guardado = datos.get("panel", posicion_panel.get()) #Recupera la posición guardada
+        desplazamiento = 2 if panel_guardado == "Izquierda" else 0 #Calcula el espacio del tablero
+        columna_panel = 0 if panel_guardado == "Izquierda" else 11 #Calcula la columna del panel
+        for fila in range(5): #Recorre las filas del tablero
+            for columna in range(5): #Recorre las columnas
+                casillas[fila][columna].grid_configure(column=columna*2+desplazamiento) #Mueve la casilla
+
+        for numero in range(1, 6): #Recorre los botones numéricos
+            botones[numero-1].grid_configure(column=columna_panel) #Mueve el botón a su posición
+
         if "original" not in datos:#Detecta partidas del formato anterior
             messagebox.showwarning(
                 "Partida antigua",
@@ -480,6 +566,9 @@ def abrir_juego():
                         messagebox.showwarning("Aviso", "Seleccione una partida", parent=ventana_partidas)
                         return#Evita continuar sin seleccionar
                     datos = partidas[seleccion[0]]#Obtiene los datos de la partida seleccionada
+                    panel_guardado = datos.get("panel", posicion_panel.get()) #Recupera la posición guardada
+                    if panel_guardado != posicion_panel.get(): #Comprueba si el panel cambió
+                        messagebox.showinfo("Aviso", "La partida se cargará con la posición actual del panel.", parent=ventana_partidas) #Informa la diferencia
                     ventana_partidas.destroy()#Cierra la ventana de selección
                     if not restaurar_tablero(datos):#Recupera el tablero original
                         return
