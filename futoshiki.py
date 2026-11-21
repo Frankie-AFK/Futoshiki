@@ -30,29 +30,47 @@ except (FileNotFoundError, json.JSONDecodeError, KeyError):#Si no existe o está
 
 def abrir_juego():
     juego = tk.Toplevel(ventana)#Abre otra ventana
+    juego.configure(bg="white") #Cambia el fondo de la ventana a blanco
     juego.title("Partida de Futoshiki")
     juego.geometry("700x600")#Aumenta el espacio para el panel de dígitos
     iniciado = [False]#Indica si la partida ha comenzado
     terminado = [False]#Indica si la partida ya terminó
     segundos = [0]#Guarda los segundos transcurridos
     reloj_pendiente = [None]#Guarda el identificador del contador
+    inicio_reloj = [0] #Guarda el momento de inicio del reloj
+    reloj_pausado = [False] #Indica si el reloj está pausado
     partida_cargada = [False]#Indica si se recuperó una partida guardada
     modo_reloj = [tipo_reloj.get()]#Guarda el modo de reloj de esta partida
     tiempo_limite = [tiempo_timer[0] * 3600 + tiempo_timer[1] * 60 + tiempo_timer[2]]#Guarda el límite del Timer
-    desplazamiento = 2 if posicion_panel.get() == "Izquierda" else 0#Deja espacio para el panel izquierdo
-    columna_panel = 0 if posicion_panel.get() == "Izquierda" else 11#Define dónde aparecen los números
-    titulo = tk.Label(juego, text="FUTOSHIKI", font=("Arial", 24, "bold"))#Título del juego
-    titulo.grid(row=0, column=0, columnspan=10, pady=10)#Coloca el título arriba
-    nivel = tk.Label(juego, text="NIVEL " + dificultad_actual.get().upper(), font=("Arial", 14))#Muestra la dificultad seleccionada
+    desplazamiento = 4 if posicion_panel.get() == "Izquierda" else 2 #Deja espacio para centrar el tablero
+    columna_panel = 1 if posicion_panel.get() == "Izquierda" else 11 #Coloca los círculos a un lado del tablero
+    titulo = tk.Label(juego, text="FUTOSHIKI", font=("Arial", 24, "bold"), bg="#C00000", fg="white", width=18) #Crea el título rojo con letras blancas
+    titulo.grid(row=0, column=0, columnspan=11, pady=10) #Coloca el título centrado sobre el juego
+    nivel = tk.Label(juego, bg="white",text="NIVEL " + dificultad_actual.get().upper(), font=("Arial", 14))#Muestra la dificultad seleccionada
     nivel.grid(row=1, column=0, columnspan=10)#Coloca el nivel debajo del título
-    texto_nombre = tk.Label(juego, text="Nombre del jugador:")#Texto para pedir el nombre
+    texto_nombre = tk.Label(juego, bg="white",text="Nombre del jugador:")#Texto para pedir el nombre
     texto_nombre.grid(row=2, column=0, columnspan=3)#Coloca el texto
     entrada_nombre = tk.Entry(juego, width=25)#Espacio para escribir el nombre
     entrada_nombre.grid(row=2, column=3, columnspan=5)#Coloca la entrada
-    reloj = tk.Label(juego, text="00:00:00", font=("Arial", 16))#Muestra el tiempo de la partida
-    reloj.grid(row=15, column=0, columnspan=3, pady=10)#Coloca el reloj debajo de los botones
-    if tipo_reloj.get() == "No usar reloj":#Comprueba si el reloj está desactivado
-        reloj.grid_remove()#Oculta el reloj
+    reloj = tk.Frame(juego, bg="black", bd=1) #Crea el marco del reloj
+    reloj.grid(row=15, column=0, columnspan=3, pady=10) #Coloca el reloj debajo de los botones
+    etiquetas_reloj = [] #Guarda las tres casillas del reloj
+    for columna, nombre in enumerate(["Horas", "Minutos", "Segundos"]): #Crea las tres columnas
+        tk.Label(reloj, text=nombre, bg="white", width=9, relief="solid", bd=1).grid(row=0, column=columna) #Muestra el encabezado
+        etiqueta = tk.Label(reloj, text="00", bg="white", width=9, height=2, relief="solid", bd=1) #Crea la casilla del tiempo
+        etiqueta.grid(row=1, column=columna) #Coloca el valor debajo del encabezado
+        etiquetas_reloj.append(etiqueta) #Guarda la casilla para actualizarla
+
+
+
+
+    def mostrar_tiempo(texto): #Actualiza las tres partes del reloj
+        valores = texto.split(":") #Separa horas, minutos y segundos
+        for indice in range(3): #Recorre las tres casillas
+            etiquetas_reloj[indice].config(text=valores[indice]) #Actualiza cada valor
+    if tipo_reloj.get() == "No usar reloj": #Comprueba la configuración
+        reloj.grid_remove() #Oculta el reloj si está desactivado
+
 
 
     
@@ -207,8 +225,8 @@ def abrir_juego():
     for fila in range(5):#Recorre las 5 filas
         fila_casillas = []#Guarda las casillas de una fila
         for columna in range(5):#Recorre las 5 columnas
-            casilla = tk.Entry(juego, width=4, font=("Arial", 20), justify="center")
-            casilla.grid(row=fila*2+4, column=columna*2+desplazamiento, padx=5, pady=5)#Coloca las casillas según el panel
+            casilla = tk.Entry(juego, width=3, font=("Arial", 20), justify="center", bg="white", relief="solid", bd=1) #Crea casillas blancas con bordes completos
+            casilla.grid(row=fila*2+4, column=columna*2+desplazamiento, padx=2, pady=5) #Reduce el espacio entre casillas
             casilla.bind("<Button-1>", lambda evento, f=fila, c=columna: colocar_numero(f, c))#Detecta el clic izquierdo
             casilla.bind("<Key>", lambda evento: "break")#Impide escribir directamente con el teclado
             fila_casillas.append(casilla)#Guarda la casilla en su fila
@@ -231,14 +249,14 @@ def abrir_juego():
         fila = dato["fila"]#Obtiene la fila
         columna = dato["columna"]#Obtiene la columna
         signo = dato["restricción"]#Obtiene el símbolo < o >
-        simbolo = tk.Label(juego, text=signo, font=("Arial", 16))#Crea el símbolo
+        simbolo = tk.Label(juego,bg="white", text=signo, font=("Arial", 16))#Crea el símbolo
         simbolo.grid(row=fila*2+4, column=columna*2+1+desplazamiento)#Coloca los símbolos horizontales
         etiquetas_desigualdad.append(simbolo)#Guarda el símbolo para restaurarlo
     for dato in partida[0]["desigualdades_verticales"]:#Recorre las desigualdades verticales
         fila = dato["fila"]#Obtiene la fila
         columna = dato["columna"]#Obtiene la columna
         signo = dato["restricción"]#Obtiene el símbolo vertical
-        simbolo = tk.Label(juego, text=signo, font=("Arial", 16))#Crea el símbolo
+        simbolo = tk.Label(juego,bg="white", text=signo, font=("Arial", 16))#Crea el símbolo
         simbolo.grid(row=fila*2+5, column=columna*2+desplazamiento)#Coloca los símbolos verticales
         etiquetas_desigualdad.append(simbolo)#Guarda el símbolo para restaurarlo
     botones = []#Guarda los botones de los números
@@ -247,10 +265,13 @@ def abrir_juego():
 
 
     def actualizar_reloj():#Actualiza el reloj según el modo seleccionado
+        if reloj_pausado[0]: #Comprueba si el TOP 10 está abierto
+            reloj_pendiente[0] = None #Limpia la actualización pendiente
+            return #Evita que el reloj siga contando
         if iniciado[0] == False:#Comprueba si la partida está detenida
             reloj_pendiente[0] = None#Limpia el contador pendiente
             return
-        segundos[0] += 1#Aumenta el tiempo transcurrido
+        segundos[0] = int(time.monotonic() - inicio_reloj[0]) #Calcula los segundos reales transcurridos
         if modo_reloj[0] == "Timer":#Comprueba si está usando cuenta regresiva
             tiempo_mostrar = max(0, tiempo_limite[0] - segundos[0])#Calcula el tiempo restante
         else:
@@ -258,7 +279,7 @@ def abrir_juego():
         horas = tiempo_mostrar // 3600#Calcula las horas
         minutos = (tiempo_mostrar % 3600) // 60#Calcula los minutos
         seg = tiempo_mostrar % 60#Calcula los segundos
-        reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Actualiza la pantalla
+        mostrar_tiempo(f"{horas:02}:{minutos:02}:{seg:02}")
         if modo_reloj[0] == "Timer" and segundos[0] >= tiempo_limite[0]:#Comprueba si terminó el Timer
             respuesta = messagebox.askyesno("Tiempo expirado","TIEMPO EXPIRADO. ¿Desea continuar el mismo juego?",parent=juego)#Pregunta si desea continuar
             if respuesta == True:#Si desea continuar jugando
@@ -306,16 +327,17 @@ def abrir_juego():
         if partida_cargada[0] == False:#Comprueba si es una partida nueva
             segundos[0] = 0#Inicia el tiempo desde cero
         partida_cargada[0] = False#Limpia la marca de partida cargada
+        inicio_reloj[0] = time.monotonic() - segundos[0] #Conserva el tiempo al iniciar o cargar
         if modo_reloj[0] == "Timer":#Comprueba si usa cuenta regresiva
             restante = max(0, tiempo_limite[0] - segundos[0])#Calcula el tiempo restante
             horas = restante // 3600#Calcula las horas
             minutos = (restante % 3600) // 60#Calcula los minutos
             seg = restante % 60#Calcula los segundos
-            reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Muestra el tiempo recuperado
+            mostrar_tiempo(f"{horas:02}:{minutos:02}:{seg:02}")
         reloj_pendiente[0] = juego.after(1000, actualizar_reloj) #Cuenta el tiempo aunque el reloj esté oculto
         print("Juego iniciado")#Confirma el inicio
-    boton_iniciar = tk.Button(juego, text="INICIAR JUEGO", command=iniciar_juego)#Crea el botón
-    boton_iniciar.grid(row=14, column=0, columnspan=3, pady=20)#Coloca el botón debajo del tablero
+    boton_iniciar = tk.Button(juego, text="INICIAR\nJUEGO", command=iniciar_juego, bg="#E53935", fg="black", font=("Arial", 11, "bold"), width=12, height=2)#Crea el botón
+    boton_iniciar.grid(row=14, column=0, columnspan=3,padx=10, pady=20)#Coloca el botón debajo del tablero
 
     
 
@@ -328,9 +350,9 @@ def abrir_juego():
             casilla = casillas[fila][columna] #Busca la casilla correspondiente
             casilla.delete(0, tk.END) #Deja la casilla vacía como solicita el profesor
         else: #Si no quedan jugadas en la pila
-            messagebox.showinfo("Aviso", "NO HAY MÁS JUGADAS PARA BORRAR", parent=juego) #Muestra el mensaje solicitado
-    boton_borrar = tk.Button(juego, text="BORRAR JUGADA", command=borrar_jugada, state="disabled")#Crea el botón
-    boton_borrar.grid(row=14, column=3, columnspan=3, pady=20)#Coloca el botón debajo del tablero
+            messagebox.showinfo("Aviso", "NO HAY MÁS JUGADAS PARA BORRAR", parent=juego) #Muestra el mensaje solicitado   
+    boton_borrar = tk.Button(juego, text="BORRAR\nJUGADA", command=borrar_jugada, state="disabled", bg="#70CDD7", fg="black", font=("Arial", 11, "bold"), width=12, height=2) #Crea el botón celeste para borrar la última jugada
+    boton_borrar.grid(row=14, column=3, columnspan=3, padx=10, pady=20)#Coloca el botón debajo del tablero
 
 
 
@@ -388,8 +410,8 @@ def abrir_juego():
         print("Juego terminado")#Confirma que terminó la partida
         juego.destroy() #Cierra la partida actual
         abrir_juego() #Abre una nueva partida
-    boton_terminar = tk.Button(juego, text="TERMINAR JUEGO", command=terminar_juego, state="disabled") #Crea el botón para terminar
-    boton_terminar.grid(row=14, column=6, columnspan=3, pady=20) #Coloca el botón junto a los demás
+    boton_terminar = tk.Button(juego, text="TERMINAR\nJUEGO", command=terminar_juego, state="disabled", bg="#4CAF50", fg="black", font=("Arial", 11, "bold"), width=12, height=2) #Crea el botón verde para terminar la partida
+    boton_terminar.grid(row=14, column=6, columnspan=3, padx=10, pady=20) #Coloca el botón junto a los demás
 
 
 
@@ -445,10 +467,10 @@ def abrir_juego():
             juego.after_cancel(reloj_pendiente[0]) #Cancela el contador
             reloj_pendiente[0] = None #Limpia el contador pendiente
         segundos[0] = 0 #Reinicia el tiempo
-        reloj.config(text="00:00:00") #Reinicia la pantalla del reloj
+        mostrar_tiempo("00:00:00")
         print("Juego borrado")#Confirma que se borró el tablero
-    boton_borrar_juego = tk.Button(juego, text="BORRAR JUEGO", command=borrar_juego, state="disabled")#Crea el botón
-    boton_borrar_juego.grid(row=14, column=9, columnspan=2, pady=20)#Coloca el botón
+    boton_borrar_juego = tk.Button(juego, text="BORRAR\nJUEGO", command=borrar_juego, state="disabled", bg="#9DB9E3", fg="black", font=("Arial", 11, "bold"), width=12, height=2) #Crea el botón azul para borrar el juego
+    boton_borrar_juego.grid(row=14, column=9, columnspan=2, padx=10, pady=20)#Coloca el botón
 
     
     
@@ -490,8 +512,8 @@ def abrir_juego():
         with open("futoshiki2026juegoactual.dat", "w", encoding="utf-8") as archivo:
             json.dump(nuevas, archivo, ensure_ascii=False, indent=4)#Guarda todas las partidas
         messagebox.showinfo("Guardar", "Partida guardada correctamente", parent=juego)
-    boton_guardar = tk.Button(juego, text="GUARDAR PARTIDA", command=guardar_partida, state="disabled")#Deshabilita guardar inicialmente
-    boton_guardar.grid(row=16, column=0, columnspan=3, pady=10)#Coloca el botón debajo del reloj
+    boton_guardar = tk.Button(juego, text="GUARDAR JUEGO", command=guardar_partida, state="disabled", font=("Arial", 11), width=16, height=2, bg="white", fg="black") #Crea el botón para guardar
+    boton_guardar.grid(row=16, column=2, columnspan=3, pady=10)#Coloca el botón debajo del reloj
 
 
 
@@ -499,8 +521,8 @@ def abrir_juego():
         nonlocal nivel_seleccionado
         nonlocal desplazamiento, columna_panel #Permite cambiar la posición del panel
         panel_guardado = datos.get("panel", posicion_panel.get()) #Recupera la posición guardada
-        desplazamiento = 2 if panel_guardado == "Izquierda" else 0 #Calcula el espacio del tablero
-        columna_panel = 0 if panel_guardado == "Izquierda" else 11 #Calcula la columna del panel
+        desplazamiento = 4 if panel_guardado == "Izquierda" else 2 #Recupera la posición del tablero de la partida guardada
+        columna_panel = 1 if panel_guardado == "Izquierda" else 11 #Recupera la posición del panel de números
         for fila in range(5): #Recorre las filas del tablero
             for columna in range(5): #Recorre las columnas
                 casillas[fila][columna].grid_configure(column=columna*2+desplazamiento) #Mueve la casilla
@@ -530,11 +552,11 @@ def abrir_juego():
             etiqueta.destroy()
         etiquetas_desigualdad.clear()
         for dato in partida[0]["desigualdades_horizontales"]:
-            etiqueta = tk.Label(juego, text=dato["restricción"], font=("Arial", 16))
+            etiqueta = tk.Label(juego,bg="white", text=dato["restricción"], font=("Arial", 16))
             etiqueta.grid(row=dato["fila"]*2+4,column=dato["columna"]*2+1+desplazamiento)
             etiquetas_desigualdad.append(etiqueta)
         for dato in partida[0]["desigualdades_verticales"]:
-            etiqueta = tk.Label(juego, text=dato["restricción"], font=("Arial", 16))
+            etiqueta = tk.Label(juego,bg="white", text=dato["restricción"], font=("Arial", 16))
             etiqueta.grid(row=dato["fila"]*2+5,column=dato["columna"]*2+desplazamiento)
             etiquetas_desigualdad.append(etiqueta)
         return True
@@ -566,9 +588,6 @@ def abrir_juego():
                         messagebox.showwarning("Aviso", "Seleccione una partida", parent=ventana_partidas)
                         return#Evita continuar sin seleccionar
                     datos = partidas[seleccion[0]]#Obtiene los datos de la partida seleccionada
-                    panel_guardado = datos.get("panel", posicion_panel.get()) #Recupera la posición guardada
-                    if panel_guardado != posicion_panel.get(): #Comprueba si el panel cambió
-                        messagebox.showinfo("Aviso", "La partida se cargará con la posición actual del panel.", parent=ventana_partidas) #Informa la diferencia
                     ventana_partidas.destroy()#Cierra la ventana de selección
                     if not restaurar_tablero(datos):#Recupera el tablero original
                         return
@@ -584,7 +603,7 @@ def abrir_juego():
                     horas = tiempo_mostrar // 3600#Calcula las horas
                     minutos = (tiempo_mostrar % 3600) // 60#Calcula los minutos
                     seg = tiempo_mostrar % 60#Calcula los segundos
-                    reloj.config(text=f"{horas:02}:{minutos:02}:{seg:02}")#Actualiza el reloj
+                    mostrar_tiempo(f"{horas:02}:{minutos:02}:{seg:02}")
                     if modo_reloj[0] == "No usar reloj":
                         reloj.grid_remove()#Oculta el reloj
                     else:
@@ -603,34 +622,51 @@ def abrir_juego():
         except FileNotFoundError:#Detecta si el archivo no existe
             print("No hay ninguna partida guardada")#Muestra un aviso
             return#Termina la función
-    boton_cargar = tk.Button(juego, text="CARGAR PARTIDA", command=cargar_partida)#Crea el botón para cargar
-    boton_cargar.grid(row=16, column=6, columnspan=3, pady=10)#Coloca el botón junto a guardar
+    boton_cargar = tk.Button(juego, text="CARGAR JUEGO", command=cargar_partida, font=("Arial", 11), width=16, height=2, bg="white", fg="black") #Crea el botón para cargar
+    boton_cargar.grid(row=16, column=7, columnspan=3, pady=10)#Coloca el botón junto a guardar
 
 
 
-    def abrir_top10_juego():#Abre el TOP 10 y pausa el reloj
-        estaba_corriendo = iniciado[0] and modo_reloj[0] != "No usar reloj"#Comprueba el reloj
-        if estaba_corriendo and reloj_pendiente[0] is not None:#Si hay un contador activo
-            juego.after_cancel(reloj_pendiente[0])#Detiene temporalmente el contador
-            reloj_pendiente[0] = None#Limpia el contador pendiente
-        mostrar_top10(juego)#Abre la clasificación y espera a que se cierre
-        if estaba_corriendo and iniciado[0] and juego.winfo_exists():#Si la partida continúa
-            reloj_pendiente[0] = juego.after(1000, actualizar_reloj)#Reanuda el contador
-    boton_top10 = tk.Button(juego, text="TOP 10", command=abrir_top10_juego) #Crea el botón
-    boton_top10.grid(row=14, column=11, pady=20) #Coloca el botón junto a los demás
-
+    def abrir_top10_juego(): #Abre el TOP 10 y pausa el reloj
+        estaba_corriendo = iniciado[0] #Comprueba si el juego está activo
+        if estaba_corriendo: #Si el reloj está funcionando
+            reloj_pausado[0] = True #Pausa el reloj antes de abrir TOP 10
+            inicio_pausa = time.monotonic() #Guarda el momento exacto de la pausa
+            segundos[0] = int(inicio_pausa - inicio_reloj[0]) #Actualiza el tiempo transcurrido
+            if modo_reloj[0] == "Timer": #Comprueba si usa cuenta regresiva
+                tiempo_mostrar = max(0, tiempo_limite[0] - segundos[0]) #Calcula el tiempo restante
+            else:
+                tiempo_mostrar = segundos[0] #Obtiene el tiempo transcurrido
+            horas = tiempo_mostrar // 3600 #Calcula las horas
+            minutos = (tiempo_mostrar % 3600) // 60 #Calcula los minutos
+            seg = tiempo_mostrar % 60 #Calcula los segundos
+            mostrar_tiempo(f"{horas:02}:{minutos:02}:{seg:02}") #Congela la pantalla del reloj
+            if reloj_pendiente[0] is not None: #Comprueba si hay una actualización pendiente
+                juego.after_cancel(reloj_pendiente[0]) #Cancela la actualización
+                reloj_pendiente[0] = None #Limpia el identificador
+        mostrar_top10(juego) #Muestra el TOP 10 y espera a que se cierre
+        if estaba_corriendo and iniciado[0] and juego.winfo_exists(): #Comprueba si debe continuar
+            inicio_reloj[0] = time.monotonic() - segundos[0] #Reanuda el reloj desde el tiempo guardado
+            reloj_pausado[0] = False #Permite reanudar el reloj
+            reloj_pendiente[0] = juego.after(1000, actualizar_reloj) #Reanuda el reloj
+    boton_top10 = tk.Button(juego, text="TOP\n10", command=abrir_top10_juego, bg="#FFFF55", fg="black", font=("Arial", 11, "bold"), width=12, height=2) #Crea el botón amarillo para consultar los mejores tiempos
+    boton_top10.grid(row=14, column=11,  padx=10,pady=20) #Coloca el botón junto a los demás
 
 
     
-    def seleccionar_numero(numero):
-        seleccionado[0] = numero#Actualiza el número seleccionado
-        for boton in botones:
-            boton.config(bg="SystemButtonFace")#Quita el color anterior
-        botones[numero-1].config(bg="lightgreen")#Pinta el seleccionado
-    for numero in range(1, 6):#Recorre los números del 1 al 5
-        boton = tk.Button(juego, text=str(numero), width=5, height=2, command=lambda n=numero: seleccionar_numero(n))#Crea el botón
-        boton.grid(row=(numero-1)*2+4, column=columna_panel, padx=10)#Coloca los números según la configuración
-        botones.append(boton)#Guarda el botón en la lista
+    def seleccionar_numero(numero): #Selecciona un número del panel
+        seleccionado[0] = numero #Guarda el número seleccionado
+        for boton in botones: #Recorre todos los círculos
+            boton.itemconfig(1, fill="white") #Quita el color anterior
+        botones[numero-1].itemconfig(1, fill="#4CAF50") #Pinta de verde el círculo seleccionado
+    for numero in range(1, 6): #Recorre los números del 1 al 5
+        boton = tk.Canvas(juego, width=55, height=55, bg="white", highlightthickness=0) #Crea el círculo sobre fondo blanco
+        boton.create_oval(3, 3, 52, 52, fill="white", outline="black", width=2) #Dibuja el círculo blanco
+        boton.create_text(27, 27, text=str(numero), font=("Arial", 14)) #Coloca el número en el centro
+        boton.grid(row=(numero-1)*2+4, column=columna_panel, padx=5) #Acerca el panel de números
+        boton.bind("<Button-1>", lambda evento, n=numero: seleccionar_numero(n)) #Permite seleccionar el número
+        botones.append(boton) #Guarda el círculo en la lista
+
 
 
 
@@ -759,12 +795,14 @@ def mostrar_ayuda():#Abre el manual de usuario en PDF
 def mostrar_acerca_de():#Abre la información del programa
     acerca = tk.Toplevel(ventana)#Crea una ventana nueva
     acerca.title("Acerca de - Futoshiki")#Coloca el título
-    acerca.geometry("450x350")#Define el tamaño
+    acerca.geometry("450x420")#Amplía la ventana para mostrar toda la información
     tk.Label(acerca, text="FUTOSHIKI", font=("Arial", 22, "bold")).pack(pady=20)#Muestra el nombre
     tk.Label(acerca, text="Proyecto 2 - Introducción a la Programación", font=("Arial", 12)).pack(pady=10)#Muestra el proyecto
     tk.Label(acerca, text="Instituto Tecnológico de Costa Rica").pack(pady=5)#Muestra la institución
     tk.Label(acerca, text="Desarrollado por: Frankie Cheng Zheng").pack(pady=5)#Muestra el autor
     tk.Label(acerca, text="Año: 2026").pack(pady=5)#Muestra el año
+    tk.Label(acerca, text="Versión: 1.0").pack(pady=5)#Muestra la versión del programa
+    tk.Label(acerca, text="Fecha de creación: noviembre de 2026").pack(pady=5)#Muestra la fecha de creación
     tk.Label(acerca, text="Juego de lógica Futoshiki 5x5").pack(pady=10)#Describe el programa
     tk.Button(acerca, text="CERRAR", command=acerca.destroy).pack(pady=15)#Cierra la ventana
 
@@ -773,7 +811,6 @@ def mostrar_acerca_de():#Abre la información del programa
 barra_menu = tk.Menu(ventana)#Crea la barra de menú
 ventana.config(menu=barra_menu)#Coloca la barra en la ventana
 barra_menu.add_command(label="Jugar", command=abrir_juego)#Abre el juego
-barra_menu.add_command(label="TOP 10", command=mostrar_top10)#Abre la clasificación
 barra_menu.add_command(label="Configurar", command=abrir_configuracion)#Abre la configuración
 barra_menu.add_command(label="Ayuda", command=mostrar_ayuda)#Abre las instrucciones del juego
 barra_menu.add_command(label="Acerca de", command=mostrar_acerca_de)#Abre la información del programa
