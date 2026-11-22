@@ -215,7 +215,10 @@ def abrir_juego():
                 if tablero_completo() and tablero_correcto():#Comprueba si el jugador ganó
                     victoria()#Finaliza la partida automáticamente al ganar
             else: #Si la casilla contiene un número predeterminado
-                messagebox.showerror("Error", "JUGADA NO ES VÁLIDA PORQUE NO PUEDE CAMBIAR UN DÍGITO PREDETERMINADO", parent=juego) #Muestra el aviso
+                color_anterior = casilla.cget("disabledbackground") #Guarda el color original
+                casilla.config(disabledbackground="red") #Marca la casilla fija en rojo
+                messagebox.showerror("Error", "JUGADA NO ES VÁLIDA PORQUE NO PUEDE CAMBIAR UN DÍGITO PREDETERMINADO", parent=juego) #Muestra el error
+                casilla.config(disabledbackground=color_anterior) #Recupera el color original
         return "break"#Evita que el clic modifique la casilla
 
 
@@ -234,7 +237,7 @@ def abrir_juego():
     nivel_seleccionado = dificultad_actual.get()#Obtiene la dificultad seleccionada
     partidas_nivel = partidas[nivel_seleccionado]#Busca las partidas de esa dificultad
     if len(partidas_nivel) == 0:#Comprueba si hay partidas disponibles
-        messagebox.showwarning("Sin partidas", "Todavía no hay partidas para esta dificultad", parent=juego)
+        messagebox.showwarning("Sin partidas", "NO HAY PARTIDAS PARA ESTE NIVEL", parent=juego)
         juego.destroy()#Cierra la ventana del juego
         return
     partida = [random.choice(partidas_nivel)]#Permite recuperar el tablero original
@@ -466,8 +469,14 @@ def abrir_juego():
         if reloj_pendiente[0] is not None: #Comprueba si el reloj está activo
             juego.after_cancel(reloj_pendiente[0]) #Cancela el contador
             reloj_pendiente[0] = None #Limpia el contador pendiente
-        segundos[0] = 0 #Reinicia el tiempo
-        mostrar_tiempo("00:00:00")
+            segundos[0] = 0 #Reinicia el tiempo transcurrido
+        if modo_reloj[0] == "Timer": #Comprueba si utiliza Timer
+            horas = tiempo_limite[0] // 3600 #Obtiene las horas configuradas
+            minutos = (tiempo_limite[0] % 3600) // 60 #Obtiene los minutos
+            seg = tiempo_limite[0] % 60 #Obtiene los segundos
+            mostrar_tiempo(f"{horas:02}:{minutos:02}:{seg:02}") #Restaura el tiempo inicial
+        else: #Si utiliza Cronómetro o No usar reloj
+            mostrar_tiempo("00:00:00") #Reinicia el contador
         print("Juego borrado")#Confirma que se borró el tablero
     boton_borrar_juego = tk.Button(juego, text="BORRAR\nJUEGO", command=borrar_juego, state="disabled", bg="#9DB9E3", fg="black", font=("Arial", 11, "bold"), width=12, height=2) #Crea el botón azul para borrar el juego
     boton_borrar_juego.grid(row=14, column=9, columnspan=2, padx=10, pady=20)#Coloca el botón
@@ -797,7 +806,7 @@ def mostrar_acerca_de():#Abre la información del programa
     acerca.title("Acerca de - Futoshiki")#Coloca el título
     acerca.geometry("450x420")#Amplía la ventana para mostrar toda la información
     tk.Label(acerca, text="FUTOSHIKI", font=("Arial", 22, "bold")).pack(pady=20)#Muestra el nombre
-    tk.Label(acerca, text="Proyecto 2 - Introducción a la Programación", font=("Arial", 12)).pack(pady=10)#Muestra el proyecto
+    tk.Label(acerca, text="Proyecto 2 - Taller de Programación", font=("Arial", 12)).pack(pady=10)
     tk.Label(acerca, text="Instituto Tecnológico de Costa Rica").pack(pady=5)#Muestra la institución
     tk.Label(acerca, text="Desarrollado por: Frankie Cheng Zheng").pack(pady=5)#Muestra el autor
     tk.Label(acerca, text="Año: 2026").pack(pady=5)#Muestra el año
